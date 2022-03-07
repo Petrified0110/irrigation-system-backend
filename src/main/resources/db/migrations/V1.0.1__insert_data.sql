@@ -1,0 +1,1 @@
+-- INSERT INTO data(id, data, time_of_ingestion) VALUES ('aebbadf8-52d9-4015-866b-c7f3ffa6c04b', 'data', '2020-12-12 11:30:30.12345')
