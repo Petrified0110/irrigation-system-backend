@@ -13,7 +13,8 @@ object ApiRoutes {
   val baseEndpoint = "https://api.nrfcloud.com/v1"
 
   def pollMessages(deviceId: String, start: Option[OffsetDateTime], end: Option[OffsetDateTime])(
-    implicit as: ActorSystem): Future[HttpResponse] = {
+    implicit as: ActorSystem
+  ): Future[HttpResponse] = {
     val inclusiveStart = start.getOrElse(OffsetDateTime.now()).atZoneSameInstant(ZoneOffset.UTC)
     val exclusiveEnd = end.getOrElse(OffsetDateTime.now()).atZoneSameInstant(ZoneOffset.UTC)
 

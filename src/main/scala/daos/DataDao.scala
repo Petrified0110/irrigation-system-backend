@@ -15,6 +15,10 @@ final class DataDao(implicit ec: ExecutionContext) {
 
   def insertMany(data: Seq[SensorData]): DBIO[Option[Int]] =
     dao ++= data
+
+  def getByTypeAndDate(dataType: String, from: OffsetDateTime, to: OffsetDateTime): DBIO[Seq[SensorData]] = {
+    dao.filter(_.dataType === dataType).filter(_.time < to).filter(_.time > from).result
+  }
 }
 
 final class DataSchema(tag: Tag) extends Table[SensorData](tag, "data_table") {
