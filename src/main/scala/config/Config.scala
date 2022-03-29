@@ -15,4 +15,9 @@ trait Config {
   val databaseUrl = databaseConfig.getString("url")
   val databaseUser = databaseConfig.getString("user")
   val databasePassword = databaseConfig.getString("password")
+
+  val databaseMaxDataLines = databaseConfig.getInt("maxDataLines")
+
+  private val http = config.getConfig("http")
+  val interface = http.getString("interface")
 }

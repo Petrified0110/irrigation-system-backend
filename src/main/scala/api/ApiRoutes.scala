@@ -12,17 +12,33 @@ object ApiRoutes {
 
   val baseEndpoint = "https://api.nrfcloud.com/v1"
 
-  def pollMessages(deviceId: String, start: Option[OffsetDateTime], end: Option[OffsetDateTime])(
+  def pollMessages(deviceId: String, nrfToken: String, start: Option[OffsetDateTime], end: Option[OffsetDateTime])(
     implicit as: ActorSystem
   ): Future[HttpResponse] = {
     val inclusiveStart = start.getOrElse(OffsetDateTime.now()).atZoneSameInstant(ZoneOffset.UTC)
     val exclusiveEnd = end.getOrElse(OffsetDateTime.now()).atZoneSameInstant(ZoneOffset.UTC)
 
-    Http().singleRequest(
+    singleRequest(
       HttpRequest(
-        uri = Uri(
-          s"$baseEndpoint/messages?deviceId=$deviceId&inclusiveStart=$inclusiveStart&exclusiveEnd=$exclusiveEnd"),
-        headers = Seq(Authorization(OAuth2BearerToken("b9c7ed80b99bf0d221d58800c8d1b130b6103423")))
+        uri =
+          Uri(s"$baseEndpoint/messages?deviceId=$deviceId&inclusiveStart=$inclusiveStart&exclusiveEnd=$exclusiveEnd"),
+        headers = Seq(Authorization(OAuth2BearerToken(nrfToken)))
       ))
   }
+
+  def getNrfDevice(deviceId: String, nrfToken: String)(
+    implicit as: ActorSystem
+  ): Future[HttpResponse] = {
+
+    singleRequest(
+      HttpRequest(
+        uri = Uri(s"$baseEndpoint/devices/$deviceId"),
+        headers = Seq(Authorization(OAuth2BearerToken(nrfToken)))
+      ))
+  }
+
+  private def singleRequest(httpRequest: HttpRequest)(
+    implicit as: ActorSystem
+  ): Future[HttpResponse] =
+    Http().singleRequest(httpRequest)
 }
