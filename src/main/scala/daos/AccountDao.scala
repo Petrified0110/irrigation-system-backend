@@ -22,9 +22,11 @@ final class AccountDao(implicit ec: ExecutionContext) {
   def get(id: Int): DBIO[Seq[Account]] = {
     dao.filter(_.id === id).result
   }
-
   def get(): DBIO[Seq[Account]] = {
     dao.result
+  }
+  def getWithId(): DBIO[Seq[(Int, Account)]] = {
+    dao.map(account => account.id -> account).result
   }
 }
 

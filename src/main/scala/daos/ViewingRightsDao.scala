@@ -22,6 +22,8 @@ final class ViewingRightsDao(implicit ec: ExecutionContext) {
   def get(deviceId: String, accountId: Int): DBIO[Seq[ViewingRight]] =
     dao.filter(_.deviceId === deviceId).filter(_.accountId === accountId).result
 
+  def get(deviceId: String): DBIO[Seq[ViewingRight]] =
+    dao.filter(_.deviceId === deviceId).result
 }
 
 final class ViewingRightsSchema(tag: Tag) extends Table[ViewingRight](tag, "viewing_rights") {

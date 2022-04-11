@@ -33,6 +33,14 @@ trait Endpoints {
       .name("get-all-accounts")
   }
 
+  val getAccountsDeviceCanBeSharedWithEndpoint: PublicEndpoint[(String, String), String, Seq[Account], Any] = {
+    baseEndpoint.get
+      .in("accounts" / query[String]("deviceId"))
+      .in(header[String]("Authorization"))
+      .out(jsonBody[Seq[Account]])
+      .name("get-all-accounts")
+  }
+
   val loginEndpoint: PublicEndpoint[Credentials, String, String, Any] =
     baseEndpoint.post
       .in("token")

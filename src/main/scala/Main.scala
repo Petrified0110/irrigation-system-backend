@@ -1,15 +1,15 @@
-import actors.{PollActor, PollActorHub}
+import actors.PollActorHub
 import akka.actor.{ActorRef, ActorSystem, Props}
 import api.Docs.uiServerEndpoints
 import api.{ApiServer, EndpointsLogic}
 import config.{Config, DatabaseConfig, MigrationConfig}
-import daos.{AccountDao, DataDao, DeviceDao, ViewingRightsDao}
+import daos.{AccountDao, DataDao, DeviceDao, LocationDao, ViewingRightsDao}
 import processing.SensorDataProcessor
 
 import java.time.OffsetDateTime
-import java.util.concurrent.{Executors, TimeUnit}
+import java.util.concurrent.Executors
 import java.util.logging.Logger
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext}
 
 object Main extends App with MigrationConfig with DatabaseConfig with Config {
@@ -27,8 +27,9 @@ object Main extends App with MigrationConfig with DatabaseConfig with Config {
   val dataDao = new DataDao()
   val accountDao = new AccountDao()
   val viewingRightsDao = new ViewingRightsDao()
+  val locationDao = new LocationDao()
   val deviceDao = new DeviceDao(viewingRightsDao, accountDao)
-  val sensorDataProcessor = new SensorDataProcessor(dataDao)
+  val sensorDataProcessor = new SensorDataProcessor(dataDao, locationDao)
 
   val pollActorHub: ActorRef = as.actorOf(Props(new PollActorHub(serviceStartTime, sensorDataProcessor, deviceDao)))
 

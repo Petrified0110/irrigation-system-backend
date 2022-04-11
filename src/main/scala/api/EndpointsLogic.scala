@@ -1,5 +1,4 @@
 package api
-import actors.PollActorHub
 import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
 import cats.data.EitherT
@@ -52,7 +51,7 @@ class EndpointsLogic(
     ): Future[Either[String, Seq[Account]]] = {
       (for {
         decodedToken <- EitherT(Future.successful(JWT.decodeToken(token)))
-        accountIdAndAccount <- EitherT(getAccount(decodedToken.email))
+        _ <- EitherT(getAccount(decodedToken.email))
 
         result: EitherT[Future, String, Seq[Account]] = EitherT(
           transact(accountDao.get())
@@ -63,6 +62,22 @@ class EndpointsLogic(
         resultWithoutEither <- result
 
       } yield resultWithoutEither).value
+    }
+
+    def getShareableAccounts(
+      deviceId: String,
+      token: String
+    ): Future[Either[String, Seq[Account]]] = {
+      (for {
+        decodedToken <- EitherT(Future.successful(JWT.decodeToken(token)))
+        accountIdAndAccount <- EitherT(getAccount(decodedToken.email))
+        (accountId, _) = accountIdAndAccount
+
+        _ <- EitherT(getDevice(deviceId))
+
+        accountsWithoutAccess <- EitherT(getAccountsThatDoNotHaveAccessToDevice(deviceId, accountId))
+
+      } yield accountsWithoutAccess.map(_._2)).value
     }
 
     def login(
@@ -218,6 +233,7 @@ class EndpointsLogic(
       shareDeviceEndpoints.serverLogic((shareDevice _).tupled),
       getDevicesEndpoint.serverLogic(getDevices),
       getDataEndpoint.serverLogic((getDataLogic _).tupled),
+      getAccountsDeviceCanBeSharedWithEndpoint.serverLogic((getShareableAccounts _).tupled),
       createAccountEndpoint.serverLogic(postAccount),
       loginEndpoint.serverLogic(login),
       getAllAccountsEndpoint.serverLogic(getAllAccounts),
@@ -267,4 +283,27 @@ class EndpointsLogic(
       }
     }
   }
+
+  private def getAccountsThatDoNotHaveAccessToDevice(
+    deviceId: String,
+    deviceOwner: Int): Future[Either[AuthToken, Seq[(Int, Account)]]] = {
+    val accountsWithoutAccess = transact(for {
+      allAccounts <- accountDao.getWithId()
+      allViewingRightsForDevice <- viewingRightsDao.get(deviceId)
+
+      accountsWithoutAccess = allAccounts.filterNot(
+        account =>
+          allViewingRightsForDevice.exists(viewingRight => viewingRight.accountId === account._1) ||
+            account._1 === deviceOwner)
+    } yield accountsWithoutAccess)
+
+    accountsWithoutAccess.collect { accounts =>
+      accounts.size match {
+        case 0 => Left("There are no accounts without access to your device")
+        case _ => Right(accounts)
+      }
+
+    }
+  }
+
 }
