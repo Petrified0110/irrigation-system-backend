@@ -12,12 +12,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ForecastDataProcessor {
 
-  def processAndRetrieve(location: GPSData)(
+  def processAndRetrieve(location: GPSData, weatherApiToken: String)(
     implicit m: Materializer,
     ec: ExecutionContext,
     as: ActorSystem
   ): Future[Either[String, ForecastForLocation]] = {
-    val response = ApiRoutes.getPredictionData(location)
+    val response = ApiRoutes.getPredictionData(location, weatherApiToken)
 
     response
       .flatMap(Unmarshal(_).to[String])

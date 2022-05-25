@@ -11,7 +11,7 @@ object Docs extends Endpoints {
     RedocInterpreter().fromEndpoints[Future](
       List(
         getDataEndpoint,
-        healthEndpoint,
+//        healthEndpoint,
         createAccountEndpoint,
         getAllAccountsEndpoint,
         loginEndpoint,

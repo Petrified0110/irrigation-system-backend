@@ -80,6 +80,7 @@ trait Endpoints {
         Option[String]]("to"))
     .in(header[String]("Authorization"))
     .out(jsonBody[Seq[SensorData]])
+    .name("get-data")
 
 //  // Re-usable parameter description
 //  private val limitParameter = query[Option[Int]]("limit").description("Maximum number of books to retrieve")

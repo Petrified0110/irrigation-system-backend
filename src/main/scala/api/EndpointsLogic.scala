@@ -19,6 +19,7 @@ class EndpointsLogic(
   accountDao: AccountDao,
   deviceDao: DeviceDao,
   viewingRightsDao: ViewingRightsDao,
+  locationDao: LocationDao,
   pollActorHub: ActorRef
 )(
   implicit m: Materializer,
@@ -238,7 +239,7 @@ class EndpointsLogic(
       loginEndpoint.serverLogic(login),
       getAllAccountsEndpoint.serverLogic(getAllAccounts),
       healthEndpoint.serverLogic { _ =>
-        Future.successful[Either[StatusCode, Unit]](Right("pong"))
+        Future.successful[Either[StatusCode, Unit]](Right("healthy server"))
       }
     )
   }
@@ -260,9 +261,9 @@ class EndpointsLogic(
 
     devicesSeqTry.collect { devices =>
       devices.size match {
-        case 0 => Left("No account exists with this email")
+        case 0 => Left("No device exists with this id")
         case 1 => Right(devices.head)
-        case _ => Left("Something is wrong, more accounts with the same email")
+        case _ => Left("Something is wrong, more devices with the same id")
       }
     }
   }
