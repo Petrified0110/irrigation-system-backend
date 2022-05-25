@@ -33,7 +33,8 @@ object Main extends App with MigrationConfig with DatabaseConfig with Config {
 
   val pollActorHub: ActorRef = as.actorOf(Props(new PollActorHub(serviceStartTime, sensorDataProcessor, deviceDao)))
 
-  val apiServerLogic = new EndpointsLogic(dataDao, accountDao, deviceDao, viewingRightsDao, locationDao, pollActorHub)
+  val apiServerLogic =
+    new EndpointsLogic(dataDao, accountDao, deviceDao, viewingRightsDao, locationDao, pollActorHub, weatherApiToken)
 
   val allDevicesFuture = deviceDao.getAll
   allDevicesFuture.collect(

@@ -1,6 +1,6 @@
 package api
 
-import domain.{Account, Credentials, Device, DeviceFromFrontend, SensorData}
+import domain.{Account, Credentials, Device, DeviceFromFrontend, ForecastAndLocation, SensorData}
 import io.circe.generic.auto._
 import sttp.model.StatusCode
 import sttp.tapir._
@@ -82,15 +82,11 @@ trait Endpoints {
     .out(jsonBody[Seq[SensorData]])
     .name("get-data")
 
-//  // Re-usable parameter description
-//  private val limitParameter = query[Option[Int]]("limit").description("Maximum number of books to retrieve")
-//
-//  val booksListing: PublicEndpoint[Limit, String, Vector[Book], Any] = baseEndpoint.get
-//    .in("list" / "all")
-//    .in(limitParameter)
-//    .out(jsonBody[Vector[Book]])
-//
-//  val booksListingByGenre: PublicEndpoint[BooksQuery, String, Vector[Book], Any] = baseEndpoint.get
-//    .in(("list" / path[String]("genre").map(Option(_))(_.get)).and(limitParameter).mapTo[BooksQuery])
-//    .out(jsonBody[Vector[Book]])
+  val getForecastForDeviceEndpoint: PublicEndpoint[(String, String), String, ForecastAndLocation, Any] = {
+    baseEndpoint.get
+      .in("forecast" / query[String]("deviceId"))
+      .in(header[String]("Authorization"))
+      .out(jsonBody[ForecastAndLocation])
+      .name("get-forecast-for-device")
+  }
 }

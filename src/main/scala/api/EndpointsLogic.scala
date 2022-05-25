@@ -5,6 +5,7 @@ import cats.data.EitherT
 import cats.implicits._
 import daos._
 import domain._
+import processing.ForecastDataProcessor
 import processing.NrfDeviceProcessor.checkIfDeviceValid
 import security.{Encryption, JWT}
 import sttp.model.StatusCode
@@ -20,7 +21,8 @@ class EndpointsLogic(
   deviceDao: DeviceDao,
   viewingRightsDao: ViewingRightsDao,
   locationDao: LocationDao,
-  pollActorHub: ActorRef
+  pollActorHub: ActorRef,
+  weatherApiToken: String
 )(
   implicit m: Materializer,
   ec: ExecutionContext,
@@ -138,12 +140,12 @@ class EndpointsLogic(
         //check if request is authenticated
         decodedToken <- EitherT(Future.successful(JWT.decodeToken(token)))
 
-        //check if device is a valid nRF cloud device
-        _ <- EitherT(checkIfDeviceValid(device.deviceId, device.nrfToken, device.tenantId))
-
         //check if account exists and retrieve it
         accountIdAndAccount <- EitherT(getAccount(decodedToken.email))
         (accountId, _) = accountIdAndAccount
+
+        //check if device is a valid nRF cloud device
+        _ <- EitherT(checkIfDeviceValid(device.deviceId, device.nrfToken, device.tenantId))
 
         deviceToStore = Device(
           deviceId = device.deviceId,
@@ -202,6 +204,25 @@ class EndpointsLogic(
         case Left(value) => Future.successful(Left(value))
       }
     }
+    def getForecast(deviceId: String, token: String): Future[Either[String, ForecastAndLocation]] =
+      (for {
+        //authenticate
+        decodedToken <- EitherT(Future.successful(JWT.decodeToken(token)))
+        accountIdAndAccount <- EitherT(getAccount(decodedToken.email))
+        (accountId, _) = accountIdAndAccount
+
+        device <- EitherT(getDevice(deviceId))
+
+        //check if device exists and the current user has access to it
+        _ <- EitherT(getViewingRights(deviceId, accountId, device.owner))
+
+        //get latest location for device
+        location <- EitherT(getLocation(device.deviceId))
+
+        forecastData <- EitherT(ForecastDataProcessor.processAndRetrieve(location, weatherApiToken))
+
+        forecastDataToBeSent = ForecastDataProcessor.toForecastAndLocation(forecastData)
+      } yield forecastDataToBeSent).value
 
     def getDevices(token: String): Future[Either[String, Seq[DeviceFromFrontend]]] =
       (for {
@@ -234,10 +255,11 @@ class EndpointsLogic(
       shareDeviceEndpoints.serverLogic((shareDevice _).tupled),
       getDevicesEndpoint.serverLogic(getDevices),
       getDataEndpoint.serverLogic((getDataLogic _).tupled),
+      getAllAccountsEndpoint.serverLogic(getAllAccounts),
       getAccountsDeviceCanBeSharedWithEndpoint.serverLogic((getShareableAccounts _).tupled),
       createAccountEndpoint.serverLogic(postAccount),
       loginEndpoint.serverLogic(login),
-      getAllAccountsEndpoint.serverLogic(getAllAccounts),
+      getForecastForDeviceEndpoint.serverLogic((getForecast _).tupled),
       healthEndpoint.serverLogic { _ =>
         Future.successful[Either[StatusCode, Unit]](Right("healthy server"))
       }
@@ -264,6 +286,17 @@ class EndpointsLogic(
         case 0 => Left("No device exists with this id")
         case 1 => Right(devices.head)
         case _ => Left("Something is wrong, more devices with the same id")
+      }
+    }
+  }
+
+  private def getLocation(deviceId: String): Future[Either[String, GPSData]] = {
+    val locationsSeqTry = transact(locationDao.get(deviceId))
+
+    locationsSeqTry.collect { locations =>
+      locations.size match {
+        case 0 => Left("No location exists for this device")
+        case _ => Right(locations.head)
       }
     }
   }
