@@ -20,4 +20,7 @@ trait Config {
 
   private val http = config.getConfig("http")
   val interface = http.getString("interface")
+
+  private val weatherApiConfig = config.getConfig("weatherApi")
+  val weatherApiToken = weatherApiConfig.getString("token")
 }

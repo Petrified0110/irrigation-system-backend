@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext
 final class ViewingRightsDao(implicit ec: ExecutionContext) {
   val dao: PostgresDriver.api.TableQuery[ViewingRightsSchema] = TableQuery[ViewingRightsSchema]
 
-  def insert(viewingRight: ViewingRight): DBIO[Int] =
+  def insertIfNotExist(viewingRight: ViewingRight): DBIO[Int] =
     for {
       exists <- dao
         .filter(_.accountId === viewingRight.accountId)

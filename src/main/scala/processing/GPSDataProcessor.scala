@@ -21,7 +21,7 @@ object GPSDataProcessor {
         ZoneOffset.UTC
       )
       offsetDateTime = dateTime.atTime(offsetTime)
-    } yield GPSData(rawData.deviceId, offsetDateTime, splitValues(2).toDouble, splitValues(4).toDouble)
+    } yield GPSData(rawData.deviceId, offsetDateTime, splitValues(2).toDouble / 100, splitValues(4).toDouble / 100)
   }
 
 }

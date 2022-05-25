@@ -36,6 +36,5 @@ class PollActorHub(serviceStartTime: OffsetDateTime, sensorDataProcessor: Sensor
       pollActors = pollActors :+ pollActor
       //wait for 30 seconds before starting any other schedulers
       Thread.sleep(30000)
-
   }
 }

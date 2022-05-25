@@ -192,7 +192,7 @@ class EndpointsLogic(
 
         viewingRights = ViewingRight(deviceId = deviceId, accountId = accountIdToShareWith)
 
-        result = transact(viewingRightsDao.insert(viewingRights)).map {
+        result = transact(viewingRightsDao.insertIfNotExist(viewingRights)).map {
           case 0 => Left("Viewing rights already exist")
           case _ => Right(StatusCode.Accepted)
         }
