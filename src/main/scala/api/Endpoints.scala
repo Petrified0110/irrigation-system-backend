@@ -12,7 +12,7 @@ trait Endpoints {
 
   private val baseEndpoint = endpoint.errorOut(stringBody).in("v1")
 
-  lazy val healthEndpoint: PublicEndpoint[Unit, StatusCode, Unit, Any] =
+  val healthEndpoint: PublicEndpoint[Unit, StatusCode, Unit, Any] =
     endpoint.get
       .name("health-endpoint")
       .description("Health Check Endpoint")
